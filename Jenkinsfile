@@ -167,7 +167,10 @@ pipeline {
                         old_version=$(grep '^version:' Chart.yaml | cut -d' ' -f2)
                         echo "Old version: $old_version"
 
-                        IFS='.' read -r major minor patch <<< "$old_version"
+                        major=$(echo "$old_version" | cut -d. -f1)
+                        minor=$(echo "$old_version" | cut -d. -f2)
+                        patch=$(echo "$old_version" | cut -d. -f3)
+                        
                         new_patch=$((patch + 1))
                         new_version="$major.$minor.$new_patch"
                         echo "New version: $new_version"
