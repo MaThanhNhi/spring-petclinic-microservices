@@ -183,7 +183,7 @@ pipeline {
                         IFS='.' read -r major minor patch <<< "\$old_version"
                         new_patch=\$((patch+1))
                         new_version="\${major}.\${minor}.\${new_patch}"
-                        ~/yq e '.version = "${new_version}"' -i Chart.yaml
+                        ~/yq e '.version = strenv(new_version)' -i Chart.yaml
                     """
 
                     // Commit and push changes
