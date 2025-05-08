@@ -182,7 +182,8 @@ pipeline {
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
                         sh '''
-                            sed -i "s/^imageTag: .*/imageTag: \\&tag ${env.GIT_TAG}/" environments/values-staging.yaml
+                            cd k8s
+                            sed -i "s/^imageTag: .*/imageTag: \\&tag ${GIT_TAG}/" environments/values-staging.yaml
                         '''
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
@@ -190,8 +191,9 @@ pipeline {
 
                     // Commit and push changes
                     sh '''
+                        cd k8s
                         git add .
-                        git commit -m "Update imageTag to ${env.GIT_TAG} and bump chart version to \$new_version"
+                        git commit -m "Update imageTag to ${GIT_TAG} and bump chart version to \$new_version"
                         git push origin main
                     '''
                 }
