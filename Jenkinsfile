@@ -192,17 +192,18 @@ pipeline {
                             cd k8s
                             sed -i "s/^imageTag: .*/imageTag: \\&tag ${GIT_TAG}/" environments/values-staging.yaml
                         '''
+                        COMMIT_MESSAGE = "Deploy for tag ${env.GIT_TAG}"
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
+                        COMMIT_MESSAGE = "Deploy for branch main with commit ${env.GIT_COMMIT.take(7)}"
                     }
 
-                    // Commit and push changes
-                    sh '''
+                    sh """
                         cd k8s
                         git add .
-                        git commit -m "Update imageTag to ${GIT_TAG} and bump chart version to \$new_version"
+                        git commit -m "${COMMIT_MESSAGE}"
                         git push origin main
-                    '''
+                    """
                 }
             }
         }
