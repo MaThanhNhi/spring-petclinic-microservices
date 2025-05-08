@@ -173,7 +173,7 @@ pipeline {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
                     }
                     
-                    old_version = sh(script: "~/yq e '.version' Chart.yaml", returnStdout: true).trim()
+                    old_version = sh(script: '''~/yq e '.version' Chart.yaml''', returnStdout: true).trim()
 
                     // Update the Chart version
                     sh '''
