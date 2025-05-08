@@ -198,18 +198,20 @@ pipeline {
     
     post {
         always {
-            echo "Pipeline completed with result: ${currentBuild.currentResult}"
-            echo "Pipeline run by: ${currentBuild.getBuildCauses()[0].userId ?: 'unknown'}"
-            echo "Completed at: ${new java.text.SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date())}"
-            cleanWs()
+            script {
+                echo "Pipeline completed with result: ${currentBuild.currentResult}"
+                echo "Pipeline run by: ${currentBuild.getBuildCauses()[0].userId ?: 'unknown'}"
+                echo "Completed at: ${new java.text.SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date())}"
+                cleanWs()
 
-            if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main')) {
-                if (env.GIT_TAG) {
-                    echo "Deployment to Kubernetes with tag ${env.GIT_TAG} was successful."
-                    echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.pet-clinic.cloud"
-                } else {
-                    echo "Deployment to Kubernetes with branch main was successful."
-                    echo "Add this to your /etc/hosts file: 172.28.81.156:32212 dev.pet-clinic.cloud"
+                if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main')) {
+                    if (env.GIT_TAG) {
+                        echo "Deployment to Kubernetes with tag ${env.GIT_TAG} was successful."
+                        echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.pet-clinic.cloud"
+                    } else {
+                        echo "Deployment to Kubernetes with branch main was successful."
+                        echo "Add this to your /etc/hosts file: 172.28.81.156:32212 dev.pet-clinic.cloud"
+                    }
                 }
             }
         }
