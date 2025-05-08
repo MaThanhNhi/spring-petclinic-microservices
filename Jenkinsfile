@@ -89,9 +89,7 @@ pipeline {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    """
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                 }
             }
         }
@@ -146,12 +144,12 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: 'kubectl_config', variable: 'KUBECONFIG')]) {
-                        sh """
+                        sh '''
                             mkdir -p ~/.kube
                             cp ${KUBECONFIG} ~/.kube/config
                             chmod 777 ~/.kube/config
                             echo "Kubeconfig copied and permissions set"
-                        """
+                        '''
                     }
                 }
             }
@@ -161,39 +159,37 @@ pipeline {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') } }
             steps {
                 script {
-                    sh """
+                    sh '''
                         wget https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64 -O ~/yq
                         chmod +x ~/yq
                         git clone ${K8S_GIT_REPO} k8s
                         cd k8s
-                    """
+                    '''
 
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
-                        sh """
-                            ~/yq e -i '.imageTag = "&tag ${env.GIT_TAG}"' environments/values-staging.yaml
-                        """
+                        sh '~/yq e -i \'.imageTag = "${env.GIT_TAG}"\' environments/values-staging.yaml'
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
                     }
 
                     // Update the Chart version
-                    sh """
+                    sh '''
                         old_version=\$(~/yq e '.version' Chart.yaml)
                         IFS='.' read -r major minor patch <<< "\$old_version"
                         new_patch=\$((patch + 1))
                         new_version="\$major.\$minor.\$new_patch"
 
                         # Update the version in Chart.yaml using yq
-                        ~/yq e '.version = \"\$new_version\"' -i Chart.yaml
-                    """
+                        ~/yq e '.version = "\$new_version"' -i Chart.yaml
+                    '''
 
                     // Commit and push changes
-                    sh """
+                    sh '''
                         git add .
                         git commit -m "Update imageTag to ${env.GIT_TAG} and bump chart version to \$new_version"
                         git push origin main
-                    """
+                    '''
                 }
             }
         }
