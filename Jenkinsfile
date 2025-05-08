@@ -162,6 +162,8 @@ pipeline {
             steps {
                 script {
                     sh """
+                        wget https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64 -O ~/yq
+                        chmod +x ~/yq
                         git clone ${K8S_GIT_REPO} k8s
                         cd k8s
                     """
@@ -169,26 +171,21 @@ pipeline {
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
                         sh """
-                            sed -i 's/imageTag:.*\$/imageTag: &tag ${env.GIT_TAG}/' environments/values-staging.yaml
+                            ~/yq e -i '.imageTag = "&tag ${env.GIT_TAG}"' environments/values-staging.yaml
                         """
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
                     }
 
-                    // Update the Chart version using grep, sed and bash
+                    // Update the Chart version
                     sh """
-                        # Extract the current version
-                        old_version=\$(grep -E '^version:' Chart.yaml | sed 's/version:\\s*//')
-                        echo "Current version: \$old_version"
-                        
-                        # Parse the version and increment patch number
+                        old_version=\$(~/yq e '.version' Chart.yaml)
                         IFS='.' read -r major minor patch <<< "\$old_version"
                         new_patch=\$((patch + 1))
                         new_version="\$major.\$minor.\$new_patch"
-                        echo "New version: \$new_version"
-                        
-                        # Update the version in Chart.yaml using sed
-                        sed -i 's/^version:.*\$/version: '\$new_version'/' Chart.yaml
+
+                        # Update the version in Chart.yaml using yq
+                        ~/yq e '.version = \"\$new_version\"' -i Chart.yaml
                     """
 
                     // Commit and push changes
