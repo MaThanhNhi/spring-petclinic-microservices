@@ -162,7 +162,8 @@ pipeline {
             steps {
                 script {
                     sh """
-                        sudo apt install yq -y
+                        wget https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64 -O ~/yq
+                        chmod +x ~/yq
                         git clone ${K8S_GIT_REPO} k8s
                         cd k8s
                     """
@@ -170,7 +171,7 @@ pipeline {
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
                         sh """
-                            yq e '.imageTag = "&tag ${env.GIT_TAG}"' -i environments/values-staging.yaml
+                            ~/yq e '.imageTag = "&tag ${env.GIT_TAG}"' -i environments/values-staging.yaml
                         """
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
@@ -182,7 +183,7 @@ pipeline {
                         IFS='.' read -r major minor patch <<< "\$old_version"
                         new_patch=\$((patch+1))
                         new_version="\${major}.\${minor}.\${new_patch}"
-                        yq e '.version = strenv(new_version)' -i Chart.yaml
+                        ~/yq e '.version = "${new_version}"' -i Chart.yaml
                     """
 
                     // Commit and push changes
