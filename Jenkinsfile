@@ -157,7 +157,7 @@ pipeline {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') } }
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'github-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                         sh ''' 
                             git clone https://$GIT_USERNAME:$GIT_PASSWORD@github.com/nhan925/devops_lab02_k8s.git k8s
                             cd k8s
