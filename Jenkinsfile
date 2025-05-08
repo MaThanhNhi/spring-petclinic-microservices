@@ -179,11 +179,13 @@ pipeline {
 
                     // Update the Chart version
                     sh """
-                        old_version=\$(yq e '.version' Chart.yaml)
-                        IFS='.' read -r major minor patch <<< "\$old_version"
-                        new_patch=\$((patch+1))
-                        new_version="\${major}.\${minor}.\${new_patch}"
-                        ~/yq e '.version = strenv(new_version)' -i Chart.yaml
+                        old_version=$(yq e '.version' Chart.yaml)
+                        IFS='.' read -r major minor patch <<< "$old_version"
+                        new_patch=$((patch + 1))
+                        new_version="${major}.${minor}.${new_patch}"
+
+                        # Update the version in Chart.yaml using yq
+                        ~/yq e ".version = \"$new_version\"" -i Chart.yaml
                     """
 
                     // Commit and push changes
