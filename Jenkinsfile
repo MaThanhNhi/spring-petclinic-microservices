@@ -179,7 +179,7 @@ pipeline {
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
                         sh '''
-                            sed -i "s/^imageTag: .*/imageTag: \&tag ${env.GIT_TAG}/" environments/values-staging.yaml
+                            sed -i "s/^imageTag: .*/imageTag: \\&tag ${env.GIT_TAG}/" environments/values-staging.yaml
                         '''
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
