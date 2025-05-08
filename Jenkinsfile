@@ -11,8 +11,6 @@ pipeline {
     environment {
         MINIMUM_COVERAGE = 70
         DOCKER_REGISTRY = "nhan925"
-        K8S_GIT_REPO = "https://github.com/nhan925/devops_lab02_k8s.git"
-        KUBECONFIG = credentials('kubectl_config')
         SERVICES = "spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-discovery-server,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service"
     }
     
@@ -159,8 +157,17 @@ pipeline {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') } }
             steps {
                 script {
+                    withCredentials([string(credentialsId: 'github-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        sh ''' 
+                            git clone https://$GIT_USERNAME:$GIT_PASSWORD@github.com/nhan925/devops_lab02_k8s.git k8s
+                            cd k8s
+
+                            git config user.name "Jenkins"
+                            git config user.email "jenkins@example.com"
+                        '''
+                    }
+
                     sh '''
-                        git clone ${K8S_GIT_REPO} k8s
                         cd k8s
 
                         # Extract old version using grep + cut
