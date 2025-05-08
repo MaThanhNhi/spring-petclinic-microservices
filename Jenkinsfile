@@ -203,7 +203,7 @@ pipeline {
             echo "Completed at: ${new java.text.SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date())}"
             cleanWs()
 
-            if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') {
+            if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main')) {
                 if (env.GIT_TAG) {
                     echo "Deployment to Kubernetes with tag ${env.GIT_TAG} was successful."
                     echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.pet-clinic.cloud"
