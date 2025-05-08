@@ -172,11 +172,12 @@ pipeline {
                     } else {
                         echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
                     }
+                    
+                    old_version = sh(script: "~/yq e '.version' Chart.yaml", returnStdout: true).trim()
 
                     // Update the Chart version
                     sh '''
-                        old_version=\$(~/yq e '.version' Chart.yaml)
-                        IFS='.' read -r major minor patch <<< "\$old_version"
+                        IFS='.' read -r major minor patch <<< "$old_version"
                         new_patch=\$((patch + 1))
                         new_version="\$major.\$minor.\$new_patch"
 
