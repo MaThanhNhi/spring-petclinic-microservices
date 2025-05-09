@@ -11,7 +11,7 @@ pipeline {
     environment {
         MINIMUM_COVERAGE = 70
         DOCKER_REGISTRY = "nhan925"
-        SERVICES = "spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-discovery-server,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service"
+        SERVICES = "spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-discovery-server,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service,spring-petclinic-genai-service"
     }
     
     stages {
@@ -220,10 +220,10 @@ pipeline {
                 if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main')) {
                     if (env.GIT_TAG) {
                         echo "Deployment to Kubernetes with tag ${env.GIT_TAG} was successful."
-                        echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.pet-clinic.cloud"
+                        echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.petclinic.cloud"
                     } else {
                         echo "Deployment to Kubernetes with branch main was successful."
-                        echo "Add this to your /etc/hosts file: 172.28.81.156:32212 dev.pet-clinic.cloud"
+                        echo "Add this to your /etc/hosts file: 172.28.81.156:32212 dev.petclinic.cloud"
                     }
                 }
             }
