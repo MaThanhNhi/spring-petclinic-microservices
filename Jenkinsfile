@@ -14,8 +14,8 @@ pipeline {
         SERVICES = "spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-discovery-server,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service,spring-petclinic-genai-service"
     }
     
-    stage {
-        stages('Detect Release') {
+    stages {
+        stage('Detect Release') {
             when { tag "*" }
             steps {
                 echo "A new release found with tag ${env.BRANCH_NAME}"
