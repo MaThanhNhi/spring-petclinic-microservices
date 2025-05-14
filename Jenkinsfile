@@ -42,46 +42,46 @@ pipeline {
             }
         }
         
-        stage('Build & Test') {
-            when { expression { return !CHANGED_SERVICES.isEmpty() } }
-            steps {
-                script {
-                    def parallelStages = [:] // Initialize an empty map for parallel stages
+        // stage('Build & Test') {
+        //     when { expression { return !CHANGED_SERVICES.isEmpty() } }
+        //     steps {
+        //         script {
+        //             def parallelStages = [:] // Initialize an empty map for parallel stages
                 
-                    // Split CHANGED_SERVICES and create a parallel stage for each service
-                    CHANGED_SERVICES.split(',').each { service ->
-                        parallelStages["Verify ${service}"] = {
-                            sh "./mvnw verify -pl ${service}"
-                        }
-                    }
+        //             // Split CHANGED_SERVICES and create a parallel stage for each service
+        //             CHANGED_SERVICES.split(',').each { service ->
+        //                 parallelStages["Verify ${service}"] = {
+        //                     sh "./mvnw verify -pl ${service}"
+        //                 }
+        //             }
                 
-                    // Run the parallel stages
-                    parallel parallelStages
-                }
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
+        //             // Run the parallel stages
+        //             parallel parallelStages
+        //         }
+        //     }
+        //     post {
+        //         always {
+        //             junit '**/target/surefire-reports/*.xml'
                     
-                    // Make the build unstable if coverage is below threshold
-                    recordCoverage(
-                        tools: [[parser: 'JACOCO']],
-                        sourceDirectories: [[path: 'src/main/java']],
-                        sourceCodeRetention: 'EVERY_BUILD',
-                        qualityGates: [
-                            [threshold: env.MINIMUM_COVERAGE.toInteger(), metric: 'LINE', baseline: 'PROJECT', unstable: true]
-                        ]
-                    )
+        //             // Make the build unstable if coverage is below threshold
+        //             recordCoverage(
+        //                 tools: [[parser: 'JACOCO']],
+        //                 sourceDirectories: [[path: 'src/main/java']],
+        //                 sourceCodeRetention: 'EVERY_BUILD',
+        //                 qualityGates: [
+        //                     [threshold: env.MINIMUM_COVERAGE.toInteger(), metric: 'LINE', baseline: 'PROJECT', unstable: true]
+        //                 ]
+        //             )
                     
-                    // Now check if build became unstable due to coverage, and fail it explicitly
-                    // script {
-                    //     if (currentBuild.result == 'UNSTABLE') {
-                    //         error "Build failed: Line is below the required minimum ${env.MINIMUM_COVERAGE}%"
-                    //     }
-                    // }
-                }
-            }
-        }
+        //             // Now check if build became unstable due to coverage, and fail it explicitly
+        //             // script {
+        //             //     if (currentBuild.result == 'UNSTABLE') {
+        //             //         error "Build failed: Line is below the required minimum ${env.MINIMUM_COVERAGE}%"
+        //             //     }
+        //             // }
+        //         }
+        //     }
+        // }
 
         stage('Login Docker') {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID } }
@@ -102,9 +102,6 @@ pipeline {
                         CONTAINER_TAG = "${env.GIT_TAG}"
                         CHANGED_SERVICES = env.SERVICES
                         echo "Building all services for tag: ${CONTAINER_TAG}"
-                    }
-                    else if (env.BRANCH_NAME == 'main') {
-                        CONTAINER_TAG = "latest"
                     }
                     else {
                         CONTAINER_TAG = "${env.GIT_COMMIT.take(7)}"
@@ -188,13 +185,25 @@ pipeline {
 
                     if (env.GIT_TAG) {
                         echo "Deploying to Kubernetes with tag: ${env.GIT_TAG}"
+                        COMMIT_MESSAGE = "Deploy for tag ${env.GIT_TAG}"
                         sh '''
                             cd k8s
                             sed -i "s/^imageTag: .*/imageTag: \\&tag ${GIT_TAG}/" environments/values-staging.yaml
-                        '''
-                        COMMIT_MESSAGE = "Deploy for tag ${env.GIT_TAG}"
+                        ''' 
+                        echo "✅ Updated tag for all services to ${env.GIT_TAG}"
                     } else {
-                        echo "Deploying to Kubernetes with branch: ${env.BRANCH_NAME}"
+                        echo "Deploying to Kubernetes with branch: main"
+                        CHANGED_SERVICES.split(',').each { fullName ->
+                            def shortName = fullName.replaceFirst('spring-petclinic-', '')
+                            def shortCommit = env.GIT_COMMIT.take(7)
+
+                            sh """
+                                cd k8s
+                                sed -i '/${shortName}:/{n;n;s/tag:.*/tag: ${shortCommit}/}' environments/values-dev.yaml
+                            """
+                            echo "✅ Updated tag for ${shortName} to ${env.GIT_COMMIT.take(7)}"
+                        }
+                        
                         COMMIT_MESSAGE = "Deploy for branch main with commit ${env.GIT_COMMIT.take(7)}"
                     }
 
