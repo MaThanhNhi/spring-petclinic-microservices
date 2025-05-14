@@ -18,7 +18,7 @@ pipeline {
     stages {
         stage('Detect Release') {
             when {
-                expression { return !env.TAG_NAME.isEmpty() }
+                expression { return env.TAG_NAME }
             }
             steps {
                 script {
