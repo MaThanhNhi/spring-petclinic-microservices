@@ -1,5 +1,6 @@
 def CHANGED_SERVICES = ""
 def IGNORED_DIR = [".github", ".mvn", "docs", "LICENSE", "README.md", "mvnw"]
+def GIT_TAG = ""
 
 pipeline {
     agent any
@@ -20,14 +21,14 @@ pipeline {
             steps {
                 script {
                     echo "A new release found with tag ${env.BRANCH_NAME}"
-                    env.GIT_TAG = env.BRANCH_NAME
+                    GIT_TAG = env.BRANCH_NAME
                     CHANGED_SERVICES = env.SERVICES
                 }
             }
         }
         
         stage('Detect Changes') {
-            when { expression { return !env.GIT_TAG } }
+            when { expression { return GIT_TAG.isEmpty() } }
             steps {
                 script {                  
                     def compareTarget = env.CHANGE_TARGET ? "origin/${env.CHANGE_TARGET}" : "HEAD~1"
@@ -55,7 +56,7 @@ pipeline {
         }
         
         // stage('Build & Test') {
-        //     when { expression { return !CHANGED_SERVICES.isEmpty() && !env.GIT_TAG } }
+        //     when { expression { return !CHANGED_SERVICES.isEmpty() && GIT_TAG.isEmpty() } }
         //     steps {
         //         script {
         //             def parallelStages = [:] // Initialize an empty map for parallel stages
@@ -110,8 +111,8 @@ pipeline {
                 script {
                     sh "whoami"
 
-                    if (env.GIT_TAG) {
-                        CONTAINER_TAG = "${env.GIT_TAG}"
+                    if (!GIT_TAG.isEmpty()) {
+                        CONTAINER_TAG = GIT_TAG
                         CHANGED_SERVICES = env.SERVICES
                         echo "Building all services for tag: ${CONTAINER_TAG}"
                     }
@@ -147,7 +148,7 @@ pipeline {
         }
 
         stage('Config kubectl') {
-            when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') } }
+            when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (!GIT_TAG.isEmpty() || env.BRANCH_NAME == 'main') } }
             steps {
                 script {
                     withCredentials([file(credentialsId: 'kubectl_config', variable: 'KUBECONFIG')]) {
@@ -163,7 +164,7 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main') } }
+            when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (!GIT_TAG.isEmpty() || env.BRANCH_NAME == 'main') } }
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
@@ -238,7 +239,7 @@ pipeline {
                 echo "Completed at: ${new java.text.SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date())}"
                 cleanWs()
 
-                if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.GIT_TAG || env.BRANCH_NAME == 'main')) {
+                if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (!GIT_TAG.isEmpty() || env.BRANCH_NAME == 'main')) {
                     if (env.GIT_TAG) {
                         echo "Deployment to Kubernetes with tag ${env.GIT_TAG} was successful."
                         echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.petclinic.cloud"
