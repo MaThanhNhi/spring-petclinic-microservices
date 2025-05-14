@@ -14,7 +14,7 @@ pipeline {
         SERVICES = "spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-discovery-server,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service,spring-petclinic-genai-service"
     }
     
-    stages {
+    stage {
         stages('Detect Release') {
             when { tag "*" }
             steps {
