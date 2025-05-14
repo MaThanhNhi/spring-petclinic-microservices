@@ -18,7 +18,7 @@ pipeline {
         stage('Detect Release') {
             when { tag "*" }
             steps {
-                scripts {
+                script {
                     echo "A new release found with tag ${env.BRANCH_NAME}"
                     env.GIT_TAG = env.BRANCH_NAME
                     CHANGED_SERVICES = env.SERVICES
