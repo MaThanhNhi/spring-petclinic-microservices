@@ -127,7 +127,7 @@ pipeline {
             steps {
                 script {
                     echo "Cleaning up Docker images"
-                    sh "docker image prune -a -f"
+                    sh "docker system prune -af"
                     sh  "docker logout"
                     echo "Docker logout completed"
                 }
