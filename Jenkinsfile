@@ -18,12 +18,12 @@ pipeline {
     stages {
         stage('Detect Release') {
             when {
-                tag pattern: "*", comparator: "GLOB"
+                expression { return !env.TAG_NAME.isEmpty() }
             }
             steps {
                 script {
-                    echo "A new release found with tag ${env.BRANCH_NAME}"
-                    GIT_TAG = env.BRANCH_NAME
+                    echo "A new release found with tag ${env.TAG_NAME}"
+                    GIT_TAG = env.TAG_NAME
                     CHANGED_SERVICES = env.SERVICES
                 }
             }
