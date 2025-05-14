@@ -17,7 +17,9 @@ pipeline {
     
     stages {
         stage('Detect Release') {
-            when { tag "*" }
+            when {
+                tag pattern: "*", comparator: "GLOB"
+            }
             steps {
                 script {
                     echo "A new release found with tag ${env.BRANCH_NAME}"
