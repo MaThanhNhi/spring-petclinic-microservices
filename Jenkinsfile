@@ -15,7 +15,17 @@ pipeline {
     }
     
     stages {
+        stages('Detect Release') {
+            when { tag "*" }
+            steps {
+                echo "A new release found with tag ${env.BRANCH_NAME}"
+                env.GIT_TAG = env.BRANCH_NAME
+                CHANGED_SERVICES = env.SERVICES
+            }
+        }
+        
         stage('Detect Changes') {
+            when { expression { return !env.GIT_TAG } }
             steps {
                 script {                  
                     def compareTarget = env.CHANGE_TARGET ? "origin/${env.CHANGE_TARGET}" : "HEAD~1"
@@ -43,7 +53,7 @@ pipeline {
         }
         
         // stage('Build & Test') {
-        //     when { expression { return !CHANGED_SERVICES.isEmpty() } }
+        //     when { expression { return !CHANGED_SERVICES.isEmpty() && !env.GIT_TAG } }
         //     steps {
         //         script {
         //             def parallelStages = [:] // Initialize an empty map for parallel stages
