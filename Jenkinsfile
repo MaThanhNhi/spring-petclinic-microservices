@@ -133,6 +133,7 @@ pipeline {
             }
         }
 
+        // may make conflict when >1 jobs running on the same agent
         stage('Clean Docker Images & Logout') {
             when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID } }
             steps {
@@ -141,22 +142,6 @@ pipeline {
                     sh "docker system prune -af"
                     sh  "docker logout"
                     echo "Docker logout completed"
-                }
-            }
-        }
-
-        stage('Config kubectl') {
-            when { expression { return !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.TAG_NAME || env.BRANCH_NAME == 'main') } }
-            steps {
-                script {
-                    withCredentials([file(credentialsId: 'kubectl_config', variable: 'KUBECONFIG')]) {
-                        sh '''
-                            mkdir -p ~/.kube
-                            cp ${KUBECONFIG} ~/.kube/config
-                            chmod 777 ~/.kube/config
-                            echo "Kubeconfig copied and permissions set"
-                        '''
-                    }
                 }
             }
         }
@@ -238,13 +223,18 @@ pipeline {
                 cleanWs()
 
                 if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.TAG_NAME || env.BRANCH_NAME == 'main')) {
-                    if (env.TAG_NAME) {
-                        echo "Deployment to Kubernetes with tag ${env.TAG_NAME} was successful."
-                        echo "Add this to your /etc/hosts file: 172.28.81.156:32211 staging.petclinic.cloud"
-                    } else {
-                        echo "Deployment to Kubernetes with branch main was successful."
-                        echo "Add this to your /etc/hosts file: 172.28.81.156:32212 dev.petclinic.cloud"
-                    }
+                    def baseDomain = "petclinic.cloud"
+                    def envPrefix = env.TAG_NAME ? "staging" : "dev"
+                    def nodeIP = "172.28.81.63" // change to match the worker node's IP
+
+                    echo "✅ Deployment to Kubernetes was successful with environment: ${envPrefix}"
+                    echo "Add this to your /etc/hosts file:"
+                    echo "${nodeIP} ${envPrefix}-${baseDomain}"
+                    echo "${nodeIP} eureka.${envPrefix}-${baseDomain}"
+
+                    echo "Access your app:"
+                    echo "🔗 HTTP:  http://${envPrefix}-${baseDomain}:32080"
+                    echo "🔒 HTTPS: https://${envPrefix}-${baseDomain}:32443"
                 }
             }
         }
