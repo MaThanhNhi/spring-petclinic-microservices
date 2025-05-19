@@ -4,10 +4,6 @@ def IGNORED_DIR = [".github", ".mvn", "docs", "LICENSE", "README.md", "mvnw"]
 pipeline {
     agent any
     
-    tools {
-        jdk 'JDK17'
-    }
-    
     environment {
         MINIMUM_COVERAGE = 70
         DOCKER_REGISTRY = "nhan925"
