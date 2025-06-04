@@ -222,13 +222,13 @@ pipeline {
                 if (currentBuild.result != 'FAILED' && !CHANGED_SERVICES.isEmpty() && !env.CHANGE_ID && (env.TAG_NAME || env.BRANCH_NAME == 'main')) {
                     def baseDomain = "petclinic.cloud"
                     def envPrefix = env.TAG_NAME ? "staging" : "dev"
-                    def nodeIP = "172.28.81.63" // change to match the worker node's IP
+                    def nodeIP = env.K8S_NODE_IP // change to match the worker node's IP
 
                     echo "✅ Deployment to Kubernetes was successful with environment: ${envPrefix}"
                     echo "Add this to your /etc/hosts file:"
                     echo "${nodeIP} ${envPrefix}-${baseDomain}"
                     echo "${nodeIP} eureka.${envPrefix}-${baseDomain}"
-
+                    
                     echo "Access your app:"
                     echo "🔗 HTTP:  http://${envPrefix}-${baseDomain}:32080"
                     echo "🔒 HTTPS: https://${envPrefix}-${baseDomain}:32443"

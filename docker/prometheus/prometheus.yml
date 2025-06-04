@@ -4,6 +4,13 @@ global:
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
   # scrape_timeout is set to the global default (10s).
 
+storage:
+  exemplars:
+    max_exemplars: 100000
+
+rule_files:
+  - "http-errors-alert.yml"
+
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:

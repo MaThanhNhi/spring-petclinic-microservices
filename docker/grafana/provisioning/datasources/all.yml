@@ -11,3 +11,63 @@ datasources:
   is_default: true
   version: 1
   editable: true
+  jsonData:
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: zipkin  # Replace with your actual Zipkin datasource UID
+          urlDisplayLabel: "View in Zipkin"
+
+- name: Loki
+  type: loki
+  access: proxy
+  org_id: 1
+  url: http://loki-server:3100
+  version: 1
+  editable: true
+  jsonData:
+    derivedFields:
+    - datasourceUid: zipkin
+      matcherType: label
+      matcherRegex: traceId
+      name: TraceID
+      url: "$${__value.raw}"
+      openInNewTab: true
+
+
+- name: Zipkin
+  type: zipkin
+  access: proxy
+  org_id: 1
+  url: http://tracing-server:9411
+  version: 1
+  editable: true
+  uid: zipkin
+  jsonData:
+    # Traces to Logs correlation
+    tracesToLogsV2:
+      datasourceUid: 'Loki'
+      spanStartTimeShift: '-1h'
+      spanEndTimeShift: '1h'
+      filterByTraceID: false
+      filterBySpanID: false
+      customQuery: true
+      query: '{app=~".+"}|="$${__trace.traceId}"|="$${__span.spanId}"'
+
+    
+    # Traces to Metrics correlation (new section)
+    tracesToMetrics:
+      datasourceUid: 'Prometheus'  # Use the Prometheus datasource UID
+      spanStartTimeShift: '-1h'
+      spanEndTimeShift: '1h'
+      tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+      queries:
+        - name: 'Request Rate'
+          query: 'sum(rate(http_server_requests_seconds_count{$$__tags}[$$__rate_interval])) # trace_id="$${__trace.traceId}"'
+        - name: 'Request Errors'
+          query: 'sum(rate(http_server_requests_seconds_count{$$__tags, status_code=~"5.."}[$$__rate_interval])) # trace_id="$${__trace.traceId}"'
+        - name: 'Request Duration'
+          query: 'histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{$$__tags}[$$__rate_interval])) by (le)) # trace_id="$${__trace.traceId}"'
+
+    # Span-to-trace navigation (enhancing existing capability)
+    nodeGraph:
+      enabled: true  # Enables the node graph view for better trace visualization

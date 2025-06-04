@@ -3,4 +3,38 @@
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
     <!-- Required for Loglevel managment into the Spring Petclinic Admin Server-->
     <jmxConfigurator/>
+
+     <!-- Get service name from Spring -->
+    <springProperty scope="context" name="app" source="spring.application.name"/>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://loki-server:3100/loki/api/v1/push</url>
+        </http>
+        <format>
+            <label>
+                <!-- Labels -->
+                <pattern>
+                app = ${app:-unknown},
+                host = ${HOSTNAME:-unknown}
+                </pattern>
+                <!-- Structured metadata (since Loki v2.9.0) -->
+                <structuredMetadataPattern>
+                level = %level,
+                thread = %thread,
+                class = %logger,
+                traceId = %mdc{traceId:-none},
+                spanId = %X{spanId:-none},
+                pid = ${PID:-none},
+                </structuredMetadataPattern>
+            </label>
+            <message>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${app:-%X{spring.application.name:-}},%X{traceId:-},%X{spanId:-}] ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n</pattern>
+            </message>
+        </format>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="LOKI" />
+    </root>
 </configuration>
